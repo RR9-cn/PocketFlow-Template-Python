@@ -89,4 +89,8 @@ coverage/
 .eslintcache
 
 # Optional REPL history
-.node_repl_history 
+.node_repl_history
+.output/*
+
+# Generated novel outputs
+output/
