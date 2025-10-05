@@ -18,10 +18,10 @@ def parse_novel(response: str) -> dict:
     Raises:
         ValueError: 如果缺少必要的 MARK 标记
     """
-    # 使用正则表达式提取 MARK 区块（使用 {{...}} 格式）
-    title_match = re.search(r'TITLE\{\{(.*?)\}\}TITLE', response, re.DOTALL)
-    tag_match = re.search(r'TAG\{\{(.*?)\}\}TAG', response, re.DOTALL)
-    intro_match = re.search(r'INTRO\{\{(.*?)\}\}INTRO', response, re.DOTALL)
+    # 使用正则表达式提取 MARK 区块（使用 {...} 格式，单层大括号）
+    title_match = re.search(r'TITLE\{(.*?)\}TITLE', response, re.DOTALL)
+    tag_match = re.search(r'TAG\{(.*?)\}TAG', response, re.DOTALL)
+    intro_match = re.search(r'INTRO\{(.*?)\}INTRO', response, re.DOTALL)
 
     # 验证前三个必要区块是否存在
     missing = []
@@ -40,9 +40,9 @@ def parse_novel(response: str) -> dict:
     tag_string = tag_match.group(1).strip()
     intro = intro_match.group(1).strip()
 
-    # CONTENT: 优先使用正则匹配 CONTENT{{...}}CONTENT
-    # 如果匹配不上，则取 }}INTRO 之后到 --END-- 之间的内容
-    content_match = re.search(r'CONTENT\{\{(.*?)\}\}CONTENT', response, re.DOTALL)
+    # CONTENT: 优先使用正则匹配 CONTENT{...}CONTENT（单层大括号）
+    # 如果匹配不上，则取 }INTRO 之后到 --END-- 之间的内容
+    content_match = re.search(r'CONTENT\{(.*?)\}CONTENT', response, re.DOTALL)
     if content_match:
         content = content_match.group(1).strip()
     else:
@@ -106,12 +106,12 @@ if __name__ == "__main__":
     test_response_standard = """
 这是一些额外的文本
 
-TITLE{{测试小说标题}}TITLE
-TAG{{主题-科幻末世,情节-穿越}}TAG
-INTRO{{
+TITLE{测试小说标题}TITLE
+TAG{主题-科幻末世,情节-穿越}TAG
+INTRO{
 这是一个关于末日穿越的故事。
 主角在末日中求生。
-}}INTRO
+}INTRO
 
 ## 第1章 开始
 
@@ -126,24 +126,24 @@ INTRO{{
 这是更多额外文本
 """
 
-    # 测试代码 2: 旧格式兼容（带 CONTENT{{...}}CONTENT 包裹）
-    test_response_legacy = """
-TITLE{{测试小说标题2}}TITLE
-TAG{{主题-现代言情,情节-重生}}TAG
-INTRO{{
+    # 测试代码 2: 完整格式（带 CONTENT{...}CONTENT 包裹）
+    test_response_full = """
+TITLE{测试小说标题2}TITLE
+TAG{主题-现代言情,情节-重生}TAG
+INTRO{
 这是简介
-}}INTRO
-CONTENT{{
+}INTRO
+CONTENT{
 ## 第1章 开始
 
-使用旧格式 CONTENT 标记。
+使用完整格式 CONTENT 标记。
 
 ## 第2章 继续
 
 继续写。
 
 --END--
-}}CONTENT
+}CONTENT
 """
 
     print("=" * 50)
@@ -159,10 +159,10 @@ CONTENT{{
         print(f"[FAIL] 解析失败: {e}")
 
     print("\n" + "=" * 50)
-    print("测试2: 旧格式兼容")
+    print("测试2: 完整格式")
     print("=" * 50)
     try:
-        novel = parse_novel(test_response_legacy)
+        novel = parse_novel(test_response_full)
         print("[OK] 解析成功:")
         print(f"  标题: {novel['title']}")
         print(f"  标签: {novel['tags']}")
