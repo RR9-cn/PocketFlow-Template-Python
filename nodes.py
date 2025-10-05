@@ -126,14 +126,23 @@ class SaveNovelNode(Node):
         # 准备保存的数据
         title = novel["title"]
 
-        # 1. 正文内容（HTML 格式）
-        html_content = cleaned_content.replace('\n', '<p>')
+        # 1. 正文内容（HTML 格式，用于平台粘贴，去掉章节标题）
+        # 模仿 ai-novel: 只保留段落，去掉以 ## 开头的章节标题
+        content_lines = cleaned_content.split('\n')
+        content_without_titles = [
+            line for line in content_lines
+            if line.strip() and not line.strip().startswith('##')
+        ]
+        html_content = '<p>'.join(content_without_titles)
 
         # 2. 标签和简介
         tag_str = "".join([f"[{t['label']}:{t['name']}]" for t in novel["tags"]])
         intro_content = tag_str + novel["intro"]
 
-        # 3. 完整 JSON 数据
+        # 3. 完整格式（保留章节标题和段落结构，用于人类阅读）
+        full_content = cleaned_content
+
+        # 4. 完整 JSON 数据
         json_data = {
             **novel,
             "content": cleaned_content  # 使用清理后的内容
@@ -143,6 +152,7 @@ class SaveNovelNode(Node):
             "title": title,
             "html_content": html_content,
             "intro_content": intro_content,
+            "full_content": full_content,
             "json_data": json_data
         }
 
@@ -153,25 +163,30 @@ class SaveNovelNode(Node):
         Path("output").mkdir(exist_ok=True)
         Path("output/intro").mkdir(exist_ok=True)
         Path("output/novel").mkdir(exist_ok=True)
+        Path("output/full").mkdir(exist_ok=True)
 
         # 保存文件
-        content_file = Path("output") / f"{title}.txt"
-        intro_file = Path("output/intro") / f"{title}.txt"
-        json_file = Path("output/novel") / f"{title}.json"
+        content_file = Path("output") / f"{title}.txt"          # HTML 格式（平台粘贴用）
+        intro_file = Path("output/intro") / f"{title}.txt"      # 标签+简介
+        full_file = Path("output/full") / f"{title}.txt"        # 完整格式（阅读用）
+        json_file = Path("output/novel") / f"{title}.json"      # JSON 数据
 
         content_file.write_text(exec_res["html_content"], encoding="utf-8")
         intro_file.write_text(exec_res["intro_content"], encoding="utf-8")
+        full_file.write_text(exec_res["full_content"], encoding="utf-8")
         json_file.write_text(json.dumps(exec_res["json_data"], ensure_ascii=False, indent=2), encoding="utf-8")
 
         # 保存文件路径到 shared
         shared["output_files"] = {
             "content": str(content_file),
             "intro": str(intro_file),
+            "full": str(full_file),
             "json": str(json_file)
         }
 
         print(f"✓ 小说已保存:")
-        print(f"  - 内容: {content_file}")
+        print(f"  - 平台格式: {content_file}")
+        print(f"  - 完整格式: {full_file}")
         print(f"  - 简介: {intro_file}")
         print(f"  - JSON: {json_file}")
 
