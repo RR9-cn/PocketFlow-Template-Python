@@ -20,11 +20,14 @@ def create_novel_flow():
     # 连接节点
     build_prompt >> generate_novel >> parse_novel >> validate_novel
 
+    # 解析失败则重新生成
+    parse_novel - "retry" >> generate_novel
+
     # 验证通过后保存
     validate_novel - "pass" >> save_novel
 
-    # 验证失败则结束（可以在这里添加重试逻辑）
-    # validate_novel - "fail" >> error_handler (如果需要)
+    # 验证失败则重新生成（可选：也可以直接结束）
+    validate_novel - "fail" >> generate_novel
 
     # 创建流程
     return Flow(start=build_prompt)

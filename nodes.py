@@ -72,7 +72,18 @@ class ParseNovelNode(Node):
         novel = parse_novel(raw_response)
         return novel
 
+    def exec_fallback(self, _, exc):
+        # 解析失败时的处理
+        print(f"✗ 小说解析失败: {exc}")
+        # 返回 None，在 post 中判断是否需要重新生成
+        return None
+
     def post(self, shared, prep_res, exec_res):
+        # 检查解析是否成功
+        if exec_res is None:
+            print("✗ 解析失败，准备重新生成小说...")
+            return "retry"
+
         shared["novel"] = exec_res
         print(f"✓ 小说解析成功: {exec_res['title']}")
         # 修复 f-string 语法错误：先构建标签列表，再插入

@@ -46,12 +46,11 @@ flowchart TD
     start[Start] --> build[BuildPromptNode]
     build --> generate[GenerateNovelNode]
     generate --> parse[ParseNovelNode]
-    parse --> validate[ValidateNovelNode]
-    validate -->|pass| save[SaveNovelNode]
-    validate -->|fail| error[Error Handling]
-    save --> publish[PublishNovelNode]
-    publish --> end[End]
-    error --> end
+    parse -->|解析成功 default| validate[ValidateNovelNode]
+    parse -->|解析失败 retry| generate
+    validate -->|验证通过 pass| save[SaveNovelNode]
+    validate -->|验证失败 fail| generate
+    save --> end[End]
 ```
 
 ## Utility Functions
@@ -123,7 +122,8 @@ shared = {
 
     # 文件路径
     "output_files": {
-        "content": "",       # output/{title}.txt
+        "content": "",       # output/{title}.txt (平台粘贴格式)
+        "full": "",          # output/full/{title}.txt (完整阅读格式)
         "intro": "",         # output/intro/{title}.txt
         "json": ""           # output/novel/{title}.json
     }
@@ -152,11 +152,14 @@ shared = {
 
 3. **ParseNovelNode**
    - *Purpose*: 解析 AI 返回的结构化内容
-   - *Type*: Regular
+   - *Type*: Regular (带异常处理)
    - *Steps*:
      - *prep*: 读取 shared["raw_response"]
      - *exec*: 调用 novel_parser() 工具函数，使用正则提取 TITLE、TAG、INTRO、CONTENT
-     - *post*: 将解析结果写入 shared["novel"]
+     - *exec_fallback*: 捕获解析异常，返回 None
+     - *post*:
+       - 如果 exec_res 为 None，返回 "retry" 重新生成
+       - 否则将解析结果写入 shared["novel"]，返回 "default"
 
 4. **ValidateNovelNode**
    - *Purpose*: 验证小说质量
@@ -175,7 +178,11 @@ shared = {
    - *Type*: Regular
    - *Steps*:
      - *prep*: 读取 shared["novel"]
-     - *exec*: 将内容格式化为 HTML 段落（<p>标签），保存到 3 个文件
+     - *exec*: 将内容格式化并保存到 4 个文件：
+       - output/{title}.txt - 平台粘贴格式（HTML <p>标签，去除章节标题）
+       - output/full/{title}.txt - 完整阅读格式（保留章节标题）
+       - output/intro/{title}.txt - 标签+简介
+       - output/novel/{title}.json - 完整 JSON 数据
      - *post*: 将文件路径写入 shared["output_files"]
 
 6. **PublishNovelNode**（可选功能）
