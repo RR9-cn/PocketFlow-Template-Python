@@ -92,11 +92,14 @@ def parse_novel(response: str) -> dict:
     for chapter in chapters:
         chapter["content"] = chapter["content"].strip()
 
+    # 清理全文内容中的 ## 标志
+    content_clean = re.sub(r'^##\s+', '', content, flags=re.MULTILINE)
+
     return {
         "title": title[:25],  # 限制标题长度
         "tags": tags,
         "intro": intro,
-        "content": content,
+        "content": content_clean,
         "chapters": chapters
     }
 
