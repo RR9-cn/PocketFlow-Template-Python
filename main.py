@@ -32,7 +32,7 @@ def load_config():
         ]
 
     # 读取事件库
-    events_file = Path("config/events.txt")
+    events_file = Path("config/events-test.txt")
     if events_file.exists():
         events = [e.strip() for e in events_file.read_text(encoding="utf-8").split('\n') if e.strip()]
     else:

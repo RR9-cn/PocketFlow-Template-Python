@@ -5,6 +5,7 @@ from utils.novel_parser import parse_novel
 from utils.validator import validate_content, clean_content
 import json
 from pathlib import Path
+from datetime import datetime
 
 
 class BuildPromptNode(Node):
@@ -174,12 +175,16 @@ class SaveNovelNode(Node):
         Path("output").mkdir(exist_ok=True)
         Path("output/intro").mkdir(exist_ok=True)
         Path("output/novel").mkdir(exist_ok=True)
-        Path("output/full").mkdir(exist_ok=True)
+
+        # 为 full 目录创建时间戳子目录
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        full_dir = Path("output/full") / timestamp
+        full_dir.mkdir(parents=True, exist_ok=True)
 
         # 保存文件
         content_file = Path("output") / f"{title}.txt"          # HTML 格式（平台粘贴用）
         intro_file = Path("output/intro") / f"{title}.txt"      # 标签+简介
-        full_file = Path("output/full") / f"{title}.txt"        # 完整格式（阅读用）
+        full_file = full_dir / f"{title}.txt"                   # 完整格式（阅读用）- 保存到时间戳目录
         json_file = Path("output/novel") / f"{title}.json"      # JSON 数据
 
         content_file.write_text(exec_res["html_content"], encoding="utf-8")

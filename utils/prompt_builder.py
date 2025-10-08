@@ -50,7 +50,8 @@ def build_random_prompt(tags: list, commands: list, events: list) -> str:
 请从以下标签列表中，为你的小说选择合适的标签。规则如下：
 1. 最多选择5个标签。
 2. "主题"分类为必选项，必须并且只能选择一个。
-3. 其他分类为可选项。
+3. "情节"一定包含沙雕搞笑。
+4. 其他分类为可选项。
 
 标签列表：
 {tag_instructions}
